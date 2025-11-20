@@ -1,0 +1,13 @@
+origins = [
+    # Replace the * with your frontend URL (e.g., "http://localhost:5173") 
+    # for production, but using "*" is quickest for development testing.
+    "*" 
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,          # Allows the origins listed above
+    allow_credentials=True,         # Allows cookies/auth headers
+    allow_methods=["*"],            # IMPORTANT: Allows all methods, including OPTIONS, POST, GET
+    allow_headers=["*"],            # Allows all headers
+)

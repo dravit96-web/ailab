@@ -33,7 +33,7 @@ def RAG_system(question):
         embedding_function=embedding_model
     )
 
-    retrieved_docs = vector_db.similarity_search(question, k=4)
+    retrieved_docs = vector_db.similarity_search(question, k=2)
     context = "\n\n".join([doc.page_content for doc in retrieved_docs])
 
     #llm = OllamaLLM(model="llama3.1", temperature=0.6)
@@ -47,10 +47,8 @@ def RAG_system(question):
     )
 
     prompt = ChatPromptTemplate.from_template("""
-    You are an expert in PowerShell scripting.
-    Based on the context, answer ONLY using PowerShell commands.
-    Do NOT add explanations.
-
+    You are an expert in PowerShell scripting. Answer the question with minimal explanation but crisp with accurate commands.
+    Do not answer if the question is not related to powershell.
     Context:
     {context}
 
@@ -66,7 +64,12 @@ def RAG_system(question):
     return response
 
 if __name__ == "__main__":
-    question = input("Enter your PowerShell question: ")
-    answer = RAG_system(question)
-    print("Answer:")
-    print(answer)
+    while True:
+        question = input("Enter your PowerShell question (or type 'exit' to quit): ").strip()
+        if question.lower() == "exit":
+            print("Exiting RAG system. Goodbye!")
+            break
+        answer = RAG_system(question)
+        print("Answer:")
+        print(answer.content)
+        print("------------------------------------------------------------")

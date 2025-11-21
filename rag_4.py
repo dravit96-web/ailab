@@ -1,0 +1,74 @@
+#from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
+from langchain_core.prompts import ChatPromptTemplate
+import httpx
+import os
+from langchain_openai import OpenAIEmbeddings  # <-- Use OpenAI embeddings
+from langchain_openai import ChatOpenAI
+
+tiktoken_cache_dir = r"C:\Users\GenAICHNSIRUSR111\Desktop\Aniruth\tiktoken_cache"
+os.environ["TIKTOKEN_CACHE_DIR"] = tiktoken_cache_dir
+
+# validate
+assert os.path.exists(os.path.join(tiktoken_cache_dir,"9b5ad71b2ce5302211f9c61530b329a4922fc6a4"))
+
+print("Testing Langchain with GenAI Lab Models")
+client = httpx.Client(verify=False)
+
+def RAG_system(question):
+
+    embedding_model = OpenAIEmbeddings(
+    base_url="https://genailab.tcs.in",
+    model="azure/genailab-maas-text-embedding-3-large",
+    #api_key="sk-aHHp5CYA-dVpH3M71ek1dw",  
+    api_key='sk-V4pmNP__HX36T0eUIpnPdA', # Replace with your actual API key
+    http_client=client
+    )
+
+    db_path = r"C:\Users\GenAICHNSIRUSR111\Desktop\Aniruth\Vector_DB"
+
+    vector_db = Chroma(
+        persist_directory=db_path,
+        embedding_function=embedding_model
+    )
+
+    retrieved_docs = vector_db.similarity_search(question, k=2)
+    context = "\n\n".join([doc.page_content for doc in retrieved_docs])
+
+    #llm = OllamaLLM(model="llama3.1", temperature=0.6)
+    #llm = OllamaLLM(model="gpt-oss:120b-cloud", temperature=0.6)
+    llm = ChatOpenAI(
+    base_url="https://genailab.tcs.in",
+    model = "azure/genailab-maas-gpt-4o-mini",
+    api_key="sk-V4pmNP__HX36T0eUIpnPdA", # Will be provided during event. And this key is for 
+    #Hackathon purposes only and should not be used for any unauthorized purposes
+    http_client = client
+    )
+
+    prompt = ChatPromptTemplate.from_template("""
+    You are an expert in PowerShell scripting. Answer the question with minimal explanation but crisp with accurate commands.
+    Do not answer if the question is not related to powershell.
+    Context:
+    {context}
+
+    Question:
+    {question}
+
+    Answer:
+    """)
+
+    final_prompt = prompt.format(context=context, question=question)
+    response = llm.invoke(final_prompt)
+
+    return response
+
+if __name__ == "__main__":
+    while True:
+        question = input("Enter your PowerShell question (or type 'exit' to quit): ").strip()
+        if question.lower() == "exit":
+            print("Exiting RAG system. Goodbye!")
+            break
+        answer = RAG_system(question)
+        print("Answer:")
+        print(answer.content)
+        print("------------------------------------------------------------")
